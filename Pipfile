@@ -9,6 +9,7 @@ verify_ssl = true
 flask = "*"
 pymongo = "*"
 flask-restplus = "*"
+marshmallow = "*"
 
 [requires]
 python_version = "3.8"

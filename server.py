@@ -1,5 +1,7 @@
-from flask import Flask, escape, request, abort
-from flask_restplus import Resource, Api
+from flask import Flask, escape, request
+from flask_restplus import Resource, Api, fields, abort
+from marshmallow import Schema, fields as mfields, pprint
+from marshmallow.exceptions import ValidationError
 from datetime import datetime
 from collections import namedtuple 
 import os
@@ -9,9 +11,23 @@ app = Flask(__name__)
 api = Api(app)
 
 Location = namedtuple("Location", "id name")
-Book = namedtuple("Book", "name author publication_date datetime editor location leased")
+locationModel = api.model('LocationModel', {
+    'id': fields.Integer,
+    'name': fields.String
+})
+class LocationSchema(Schema):
+    id = mfields.Integer()
+    name = mfields.Str()
 
-#class BookMongo(Object):
+Book = namedtuple("Book", "name author publication_date editor location leased")
+bookModel = api.model('BookModel', {
+    'name': fields.String,
+    'author': fields.String,
+    'publication_date': fields.DateTime,
+    'editor': fields.String,
+    'location': fields.String,
+    'leased': fields.String
+})
 
 def mongo_cursor_to_list(mongo_cursor):
     entities = [] 
@@ -20,30 +36,44 @@ def mongo_cursor_to_list(mongo_cursor):
        entities.append(e) 
     return entities
 
-def mongo_cursor_fetchone(mongo_cursor):
-    try:
-        entity = next(mongo_cursor)
-        del entity['_id']
-        return entity
-    except StopIteration:
-        return None
-
 @api.route('/locations')
 class LocationResource(Resource):
+    @api.marshal_with(locationModel)
     def get(self):
         locations = mongo_cursor_to_list(book_db.location.find({}))
         return locations
+
+    @api.expect(locationModel)
     def put(self):
-        return {'location': 'put'}
+        schema = LocationSchema()
+        try:
+            l = schema.load(request.json)
+        except ValidationError as excp:
+            print(excp)
+            abort(400, excp)
+        fetched= book_db.location.find_one({'id': l['id']})
+        if fetched is None:
+            abort(404, 'Not Found')
+        book_db.location.update_one({'id': l['id']}, {'$set': l})
+        return l
+
+    @api.expect(locationModel)
     def post(self):
-        return {'location': 'post'}
+        schema = LocationSchema(exclude=["id"])
+        try:
+            l = schema.load(request.json)
+        except ValidationError as excp:
+            print(excp)
+            abort(400, excp)
+        book_db.location.insert_one(l)
+        return l
 
 @api.route('/locations/<id>')
 class LocationResource(Resource):
+    @api.marshal_with(locationModel)
     def get(self, id):
         id_ = int(id)
-        cursor = book_db.location.find({'id': id_ })
-        location = mongo_cursor_fetchone(cursor)
+        location = book_db.location.find_one({'id': id_ })
         if location is None:
             abort(404, 'Location not found')
         return location
