@@ -96,6 +96,11 @@ class LocationResource(Resource):
             abort(404, 'Location not found')
         return location
     def delete(self, id):
+        location = book_db.location\
+            .find_one({"_id": ObjectId(id)})
+        if location is None:
+            abort(404, 'Location not found')
+        book_db.location.delete_one({"_id": ObjectId(id)})
         return {'location': 'delete'}
 
 @api.route('/books')
