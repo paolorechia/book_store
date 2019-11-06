@@ -110,9 +110,24 @@ class BookResource(Resource):
         return books 
 
     @api.expect(bookModel)
+    @api.marshal_with(bookModel)   
     def put(self):
         schema = BookSchema()
-        return {'book': 'put'}
+        try:
+            b = schema.load(request.json)
+        except ValidationError as excp:
+            print(excp)
+            abort(400, excp)
+
+        _id = b['_id']
+        del (b['_id'])
+        fetched = book_db.book.find_one({"_id": ObjectId(_id)})
+        if fetched is None:
+            abort(404, 'Not Found')
+
+        book_db.book.update_one({'_id': ObjectId(_id)}, {'$set': b})
+        b['_id'] = _id
+        return b
 
     @api.expect(bookModel)
     @api.marshal_with(bookModel)
@@ -126,10 +141,19 @@ class BookResource(Resource):
         book_db.book.insert_one(input_book)
         return input_book 
 
+@api.route('/books/<id>')
+class BookIdResource(Resource):
+    @api.marshal_with(bookModel)
+    def get(self, id):
+        book = book_db.book\
+            .find_one({"_id": ObjectId(id)})
+        if book is None:
+            abort(404, 'Location not found')
+        return book
+
     def delete(self, id):
         book_db.book.delete_one({"_id": ObjectId(id)})
         return {'Successfully deleted _id': id}
-
 
 if __name__ == "__main__":
     if os.getenv('FLASK_ENV') == 'development':
