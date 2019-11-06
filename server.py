@@ -28,7 +28,7 @@ class LocationSchema(Schema):
 
 Book = namedtuple("Book", "name author publication_date editor location leased")
 bookModel = api.model('BookModel', {
-    '_id': fields.Integer,
+    '_id': fields.String,
     'name': fields.String,
     'author': fields.String,
     'publication_date': fields.DateTime,
@@ -106,28 +106,24 @@ class LocationResource(Resource):
 class BookResource(Resource):
     @api.marshal_with(bookModel)
     def get(self):
-        books = [ e for e in (book_db.books.find({})) ]
+        books = [ e for e in (book_db.book.find({})) ]
         return books 
 
     @api.expect(bookModel)
     def put(self):
+        schema = BookSchema()
         return {'book': 'put'}
 
     @api.expect(bookModel)
-    @api.expect(bookModel)
+    @api.marshal_with(bookModel)
     def post(self):
-        print(request.json)
         schema = BookSchema(exclude=["_id"])
         try:
             input_book = schema.load(request.json)
         except ValidationError as excp:
             print(excp)
             abort(400, excp)
-        print(input_book)
-        input_book['publication_date'] = input_book['publication_date'].timestamp()
         book_db.book.insert_one(input_book)
-        input_book['_id'] = str(input_book['_id'])
-        print(input_book)
         return input_book 
 
     def delete(self, id):
