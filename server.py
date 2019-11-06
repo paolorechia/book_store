@@ -1,11 +1,17 @@
 from flask import Flask, escape, request
 from flask_restplus import Resource, Api, fields, abort
+
 from marshmallow import Schema, fields as mfields, pprint
 from marshmallow.exceptions import ValidationError
+
 from datetime import datetime
 from collections import namedtuple 
 from bson.objectid import ObjectId
+from bson import json_util
+
 import os
+import json
+
 from mongo_connector import client, book_db
 
 app = Flask(__name__)
@@ -39,15 +45,6 @@ class BookSchema(Schema):
     location = mfields.String()
     leased = mfields.String()
 
-def validate_with_schema(schema, request):
-    schema_ = schema()
-    try:
-        e = schema.load(request.json)
-    except ValidationError as excp:
-        print(excp)
-        abort(400, excp)
-    return e
-
 @api.route('/locations')
 class LocationResource(Resource):
     @api.marshal_with(locationModel)
@@ -64,8 +61,10 @@ class LocationResource(Resource):
         except ValidationError as excp:
             print(excp)
             abort(400, excp)
+
         _id = l['_id']
         del (l['_id'])
+
         fetched = book_db.location.find_one({"_id": ObjectId(_id)})
 
         if fetched is None:
@@ -83,7 +82,6 @@ class LocationResource(Resource):
             print(excp)
             abort(400, excp)
         book_db.location.insert_one(l)
-        print(l)
         return l
 
 @api.route('/locations/<id>')
@@ -108,20 +106,33 @@ class LocationResource(Resource):
 class BookResource(Resource):
     @api.marshal_with(bookModel)
     def get(self):
-        return {'book': 'get'}
+        books = [ e for e in (book_db.books.find({})) ]
+        return books 
+
     @api.expect(bookModel)
     def put(self):
         return {'book': 'put'}
+
+    @api.expect(bookModel)
     @api.expect(bookModel)
     def post(self):
-        input_book = validate_with_schema(
-            BookSchema(exclude=["id"]),
-            request.json
-        )
-        book_db.book.insert_one({})
-        return {'book': 'post'}
-    def delete(self):
-        return {'book': 'delete'}
+        print(request.json)
+        schema = BookSchema(exclude=["_id"])
+        try:
+            input_book = schema.load(request.json)
+        except ValidationError as excp:
+            print(excp)
+            abort(400, excp)
+        print(input_book)
+        input_book['publication_date'] = input_book['publication_date'].timestamp()
+        book_db.book.insert_one(input_book)
+        input_book['_id'] = str(input_book['_id'])
+        print(input_book)
+        return input_book 
+
+    def delete(self, id):
+        book_db.book.delete_one({"_id": ObjectId(id)})
+        return {'Successfully deleted _id': id}
 
 
 if __name__ == "__main__":
