@@ -15,8 +15,8 @@ class BookComponent extends HTMLElement {
   connectedCallback() {
     const { shadowRoot } = this;
     shadowRoot.innerHTML = `
-      <div class="title"><slot> </slot></div>
-      <div class="author"><slot> </slot></div>
+      <div class="title"><slot name="title"> </slot></div>
+      <div class="author"><slot name="author"> </slot></div>
     `
   }
 }
@@ -39,26 +39,27 @@ function get_books() {
   const list = document.getElementById("book-list");
   get_books_call().
     then(json_ => (json_.map(b => {
-      console.log(b); 
       const t = document.createElement('book-component');
-      console.log(t)
+      // const shadowRoot = t.shadowRoot
       const s = document.createElement('span');
-      console.log(b.name)
-      s.innerHTML = b.name;
       const s2 = document.createElement('span');
+      s.innerHTML = b.name;
+      s.slot = 'title'
       s2.innerHTML = b.author;
+      s2.slot = 'author';
       t.appendChild(s)
       t.appendChild(s2);
       list.appendChild(t);
     })));
 }
-get_books();
 
+const book_template = document.createElement('template');
+book_template.innerHTML = `
+  <span slot="title"></span>
+  <span slot="author"></span>
+`
+get_books();
 /*
-        <book-component>
-          <span slot="title"> Titulo </span>
-          <span slot="author"> Autor </span>
-        </book-component>
 const fragment = document.getElementById('book-template');
 const books = [
   { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald' },
