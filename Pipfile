@@ -10,6 +10,7 @@ flask = "*"
 pymongo = "*"
 flask-restplus = "*"
 marshmallow = "*"
+flask-cors = "*"
 
 [requires]
 python_version = "3.8"

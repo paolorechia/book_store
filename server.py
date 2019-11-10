@@ -1,5 +1,6 @@
-from flask import Flask, escape, request
+from flask import Flask, escape, request, render_template 
 from flask_restplus import Resource, Api, fields, abort
+from flask_cors import CORS
 
 from marshmallow import Schema, fields as mfields, pprint
 from marshmallow.exceptions import ValidationError
@@ -14,7 +15,8 @@ import json
 
 from mongo_connector import client, book_db
 
-app = Flask(__name__)
+app = Flask(__name__) #, static_url_path='/static', static_folder='/static')
+CORS(app)
 api = Api(app)
 
 Location = namedtuple("Location", "name")
@@ -44,6 +46,7 @@ class BookSchema(Schema):
     editor = mfields.String()
     location = mfields.String()
     leased = mfields.String()
+
 
 @api.route('/locations')
 class LocationResource(Resource):
@@ -154,6 +157,10 @@ class BookIdResource(Resource):
     def delete(self, id):
         book_db.book.delete_one({"_id": ObjectId(id)})
         return {'Successfully deleted _id': id}
+
+@app.route('/index')
+def index_html():
+    return render_template('index.html')
 
 if __name__ == "__main__":
     if os.getenv('FLASK_ENV') == 'development':
