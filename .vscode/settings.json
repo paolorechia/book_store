@@ -1,0 +1,8 @@
+{
+    "python.pythonPath": "/Users/paolo/.local/share/virtualenvs/book_store-A_9Khj4H/bin/python",
+    // "editor.fontFamily": "Fira Code",
+    "editor.fontFamily": "FiraCode-Retina",
+    "editor.fontWeight": "300", // Medium
+    "editor.fontLigatures": true,
+    "python.formatting.provider": "black"
+}
