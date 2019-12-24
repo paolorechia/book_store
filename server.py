@@ -19,6 +19,7 @@ type_defs = gql("""
     type Mutation {
         locationUpdate (_id: String!, name: String!): Location,
         locationCreate (name: String!): Location,
+        locationDelete (_id: String!): Boolean
     }
 
     type Location {
@@ -61,5 +62,15 @@ def resolve_location_create(_, info, _id=None, name=None):
     c = book_db.location.insert_one({"name": name})
     return book_db.location.find_one({"_id": c.inserted_id})
 
+@mutation.field("locationDelete")
+def resolve_location_delete(_, info, _id=None):
+    print('Delete Mutation!')
+    fetched = book_db.location.find_one({"_id": ObjectId(_id)})
+    if fetched is not None:
+        d = book_db.location.delete_one({"_id": ObjectId(_id)})
+        print(d.acknowledged)
+        return d.acknowledged
+    return False
+    
 schema = make_executable_schema(type_defs, [query, mutation])
 app = GraphQL(schema, debug=True)
