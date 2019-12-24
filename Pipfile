@@ -6,6 +6,8 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 black = "*"
+pytest = "*"
+rope = "*"
 
 [packages]
 flask = "*"
@@ -13,6 +15,8 @@ pymongo = "*"
 flask-restplus = "*"
 marshmallow = "*"
 flask-cors = "*"
+ariadne = "*"
+uvicorn = "*"
 
 [requires]
 python_version = "3.8"
