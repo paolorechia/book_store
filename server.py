@@ -59,9 +59,12 @@ def resolve_location_update(_, info, _id=None, name=None):
 @mutation.field("locationCreate")
 def resolve_location_create(_, info, _id=None, name=None):
     print('Create Mutation!')
-    c = book_db.location.insert_one({"name": name})
-    return book_db.location.find_one({"_id": c.inserted_id})
-
+    existing = book_db.location.find_one({"name": name})
+    if existing is None:
+        c = book_db.location.insert_one({"name": name})
+        return book_db.location.find_one({"_id": c.inserted_id})
+    return existing
+    
 @mutation.field("locationDelete")
 def resolve_location_delete(_, info, _id=None):
     print('Delete Mutation!')
@@ -71,6 +74,6 @@ def resolve_location_delete(_, info, _id=None):
         print(d.acknowledged)
         return d.acknowledged
     return False
-    
+
 schema = make_executable_schema(type_defs, [query, mutation])
 app = GraphQL(schema, debug=True)
