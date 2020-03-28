@@ -80,15 +80,15 @@ Resources:
       LogoutURLs:
         - https://mysite-321.s3.amazonaws.com/index.html
 
-  # MyCognitoUserPoolApiClientResourceServer:
-  #   Type: AWS::Cognito::UserPoolResourceServer
-  #   Properties: 
-  #     Identifier: apiserver
-  #     Name: ApiResourceServer
-  #     Scopes: 
-  #       - ScopeDescription: Generic Description
-  #       - ScopeName: api
-  #     UserPoolId: !Ref MyCognitoUserPool
+  MyCognitoUserPoolApiClientResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties: 
+      Identifier: api
+      Name: Api Server
+      Scopes: 
+        - ScopeDescription: Generic Description
+          ScopeName: "generic"
+      UserPoolId: !Ref MyCognitoUserPool
 
   MyCognitoUserPoolApiClient:
     Type: AWS::Cognito::UserPoolClient
@@ -98,10 +98,11 @@ Resources:
       GenerateSecret: true
       SupportedIdentityProviders:
         - COGNITO
+      # AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthFlows:
         - client_credentials
       # AllowedOAuthScopes:
-      #   - api
+      #   - api/generic
 
 # Functions
   HelloWorldFunction:
