@@ -48,6 +48,18 @@ Resources:
             UserPoolArn: !GetAtt MyCognitoUserPool.Arn
             Identity:
               Header: Authorization
+            AuthorizationScopes:
+              - api/generic
+            UsagePlan:
+              UsagePlanName: DevUsagePlan
+              CreateUsagePlan: PER_API
+              Description: Usage plan for this API
+              Quota:
+                Limit: 100
+                Period: MONTH
+              Throttle:
+                BurstLimit: 100
+                RateLimit: 10
 
 # Cognito Setup
   MyCognitoUserPool:
