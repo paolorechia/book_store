@@ -98,11 +98,11 @@ Resources:
       GenerateSecret: true
       SupportedIdentityProviders:
         - COGNITO
-      # AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthFlows:
         - client_credentials
-      # AllowedOAuthScopes:
-      #   - api/generic
+      AllowedOAuthScopes:
+        - api/generic
 
 # Functions
   HelloWorldFunction:
