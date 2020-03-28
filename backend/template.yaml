@@ -31,11 +31,10 @@ Parameters:
 
   S3BucketName:
     Type: String
-    Default: DevBucket
+    Default: dev-bucket-321
 
 
 Resources:
-
 # API Config
   MyApi:
     Type: AWS::Serverless::Api
@@ -134,6 +133,15 @@ Resources:
           WriteCapacityUnits: 1
       TableName: !Ref DynamoDBTableName
 
+
+# S3 Photo Bucket
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      PublicAccessBlockConfiguration: 
+        RestrictPublicBuckets: true
+
 # Functions
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -168,6 +176,10 @@ Outputs:
   DynamoDBTableName:
     Description: "Dynamo Table Name"
     Value: !Ref DynamoDBTable
+
+  S3Bucket:
+    Description: "S3Bucket"
+    Value: !Ref S3Bucket
 
   HelloWorldApi:
     Description: "API Gateway endpoint URL for Dev stage for Hello World function"

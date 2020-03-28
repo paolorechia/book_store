@@ -6,5 +6,7 @@ stack_name = "book-store-app"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1hebwxwdvstpc"
 s3_prefix = "book-store-app"
 region = "us-east-1"
+confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "CognitoUserPoolName=\"DevPool\" CognitoUserPoolClientName=\"DevPoolClient\" CognitoUserPoolApiClientName=\"DevApiPoolClient\""
+parameter_overrides = "CognitoUserPoolName=\"DevPool\" CognitoUserPoolClientName=\"DevPoolClient\" CognitoUserPoolApiClientName=\"DevApiPoolClient\" DynamoDBTableName=\"DevTable\" S3BucketName=\"dev-bucket-321\""
+
