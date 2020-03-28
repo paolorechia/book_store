@@ -25,8 +25,18 @@ Parameters:
     Type: String
     Default: DevApiPoolClient
 
+  DynamoDBTableName:
+    Type: String
+    Default: DevTable
+
+  S3BucketName:
+    Type: String
+    Default: DevBucket
+
 
 Resources:
+
+# API Config
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -40,6 +50,7 @@ Resources:
             Identity:
               Header: Authorization
 
+# Cognito Setup
   MyCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -104,6 +115,25 @@ Resources:
       AllowedOAuthScopes:
         - api/generic
 
+# DynamoDB
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: name
+          AttributeType: S
+        - AttributeName: author
+          AttributeType: S
+      KeySchema:
+        - AttributeName: name
+          KeyType: HASH
+        - AttributeName: author
+          KeyType: RANGE
+      ProvisionedThroughput: 
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      TableName: !Ref DynamoDBTableName
+
 # Functions
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -134,6 +164,10 @@ Outputs:
   CognitoUserPoolClientApiId:
     Description: "Cognito User Pool Client Api Id"
     Value: !Ref MyCognitoUserPoolApiClient
+
+  DynamoDBTableName:
+    Description: "Dynamo Table Name"
+    Value: !Ref DynamoDBTable
 
   HelloWorldApi:
     Description: "API Gateway endpoint URL for Dev stage for Hello World function"
