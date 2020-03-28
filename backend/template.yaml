@@ -12,6 +12,20 @@ Globals:
     Runtime: python3.8
     Handler: app.lambda_handler
 
+Parameters:
+  CognitoUserPoolName:
+    Type: String
+    Default: DevPool
+  
+  CognitoUserPoolClientName:
+    Type: String
+    Default: DevPoolClient
+
+  CognitoUserPoolApiClientName:
+    Type: String
+    Default: DevApiPoolClient
+
+
 Resources:
   MyApi:
     Type: AWS::Serverless::Api
@@ -19,7 +33,55 @@ Resources:
       StageName: Dev
       Cors: "'*'"
       Auth:
-        DefaultAuthorizer: 
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+            Identity:
+              Header: Authorization
+
+  MyCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: CognitoUserPoolName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+
+  MyCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoUserPool
+      ClientName: !Ref CognitoUserPoolClientName
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+      CallbackURLs:
+        - https://mysite-321.s3.amazonaws.com/index.html
+      LogoutURLs:
+        - https://mysite-321.s3.amazonaws.com/index.html
+        
+
+  MyCognitoUserPoolApiClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoUserPool
+      ClientName: !Ref CognitoUserPoolApiClientName
+      GenerateSecret: true
+      AllowedOAuthFlows:
+        - client_credentials
+
 
 # Functions
   HelloWorldFunction:
@@ -39,6 +101,18 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+
+  CognitoUserPoolId:
+    Description: "Cognito User Pool Id"
+    Value: !Ref MyCognitoUserPool
+
+  CognitoUserPoolClientId:
+    Description: "Cognito User Pool Client Id"
+    Value: !Ref MyCognitoUserPoolClient
+
+  CognitoUserPoolClientApiId:
+    Description: "Cognito User Pool Client Api Id"
+    Value: !Ref MyCognitoUserPoolApiClient
 
   HelloWorldApi:
     Description: "API Gateway endpoint URL for Dev stage for Hello World function"
