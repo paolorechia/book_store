@@ -1,7 +1,7 @@
 import json
 import boto3
 
-from lib import repository
+from libs import repository
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('DevTable')
@@ -31,18 +31,12 @@ def test_lambda_handler(event, context):
 
 
 def put_item_handler(event, context):
-    print(event)
     request_body = json.loads(event['body'])
-    try:
+    print(request_body)
+    context = repository.put_context()
+    print("Entering context")
+    with context:
         repository.put_item_into_table(table, request_body)
-    except Exception as err:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "message": "Creation failed: {}".format(str(err)),
-            }),
-        }
-    return {
-        "statusCode": 201,
-        "body": "Created\n"
-    }
+    print("Exited context")
+    print(context.response)
+    return context.response
