@@ -1,0 +1,888 @@
+{
+  "Description": "book-store-app\nBook Store Serverless App\n", 
+  "Parameters": {
+    "DynamoDBTableName": {
+      "Default": "DevTable", 
+      "Type": "String"
+    }, 
+    "CognitoUserPoolApiClientName": {
+      "Default": "DevApiPoolClient", 
+      "Type": "String"
+    }, 
+    "CognitoUserPoolClientName": {
+      "Default": "DevPoolClient", 
+      "Type": "String"
+    }, 
+    "CognitoUserPoolName": {
+      "Default": "DevPool", 
+      "Type": "String"
+    }, 
+    "S3BucketName": {
+      "Default": "dev-bucket-321", 
+      "Type": "String"
+    }
+  }, 
+  "AWSTemplateFormatVersion": "2010-09-09", 
+  "Outputs": {
+    "HelloWorldApi": {
+      "Description": "API Gateway endpoint URL for Dev stage for Hello World function", 
+      "Value": {
+        "Fn::Sub": "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/hello/"
+      }
+    }, 
+    "HelloWorldFunctionIamRole": {
+      "Description": "Implicit IAM Role created for Hello World function", 
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunctionRole", 
+          "Arn"
+        ]
+      }
+    }, 
+    "DynamoDBTableName": {
+      "Description": "Dynamo Table Name", 
+      "Value": {
+        "Ref": "DynamoDBTable"
+      }
+    }, 
+    "CognitoUserPoolId": {
+      "Description": "Cognito User Pool Id", 
+      "Value": {
+        "Ref": "MyCognitoUserPool"
+      }
+    }, 
+    "S3Bucket": {
+      "Description": "S3Bucket", 
+      "Value": {
+        "Ref": "S3Bucket"
+      }
+    }, 
+    "CognitoUserPoolClientApiId": {
+      "Description": "Cognito User Pool Client Api Id", 
+      "Value": {
+        "Ref": "MyCognitoUserPoolApiClient"
+      }
+    }, 
+    "HelloWorldFunction": {
+      "Description": "Hello World Lambda Function ARN", 
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunction", 
+          "Arn"
+        ]
+      }
+    }, 
+    "CognitoUserPoolClientId": {
+      "Description": "Cognito User Pool Client Id", 
+      "Value": {
+        "Ref": "MyCognitoUserPoolClient"
+      }
+    }
+  }, 
+  "Resources": {
+    "MyCognitoUserPoolApiClientResourceServer": {
+      "Type": "AWS::Cognito::UserPoolResourceServer", 
+      "Properties": {
+        "Scopes": [
+          {
+            "ScopeDescription": "Generic Description", 
+            "ScopeName": "generic"
+          }
+        ], 
+        "Identifier": "api", 
+        "Name": "Api Server", 
+        "UserPoolId": {
+          "Ref": "MyCognitoUserPool"
+        }
+      }
+    }, 
+    "MyCognitoUserPool": {
+      "Type": "AWS::Cognito::UserPool", 
+      "Properties": {
+        "UsernameAttributes": [
+          "email"
+        ], 
+        "UserPoolName": {
+          "Ref": "CognitoUserPoolName"
+        }, 
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 8
+          }
+        }, 
+        "Schema": [
+          {
+            "AttributeDataType": "String", 
+            "Required": false, 
+            "Name": "email"
+          }
+        ]
+      }
+    }, 
+    "MyApiDevStage": {
+      "Type": "AWS::ApiGateway::Stage", 
+      "Properties": {
+        "DeploymentId": {
+          "Ref": "MyApiDeployment1ec85a4a5b"
+        }, 
+        "RestApiId": {
+          "Ref": "MyApi"
+        }, 
+        "StageName": "Dev"
+      }
+    }, 
+    "TestSwaggerFunction": {
+      "Type": "AWS::Lambda::Function", 
+      "Properties": {
+        "Code": {
+          "S3Bucket": "dev-bucket-321", 
+          "S3Key": "5c488f9f19ef5c31856ad28ea583b96b"
+        }, 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ], 
+        "Handler": "handlers.handler", 
+        "Role": {
+          "Fn::GetAtt": [
+            "TestSwaggerFunctionRole", 
+            "Arn"
+          ]
+        }, 
+        "Timeout": 3, 
+        "Runtime": "python3.8"
+      }
+    }, 
+    "MyCognitoDomain": {
+      "Type": "AWS::Cognito::UserPoolDomain", 
+      "Properties": {
+        "Domain": "mytest-321", 
+        "UserPoolId": {
+          "Ref": "MyCognitoUserPool"
+        }
+      }
+    }, 
+    "CreateBookFunctionHelloWorldPermissionDev": {
+      "Type": "AWS::Lambda::Permission", 
+      "Properties": {
+        "Action": "lambda:InvokeFunction", 
+        "Principal": "apigateway.amazonaws.com", 
+        "FunctionName": {
+          "Ref": "CreateBookFunction"
+        }, 
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/POST/book", 
+            {
+              "__Stage__": "*", 
+              "__ApiId__": {
+                "Ref": "MyApi"
+              }
+            }
+          ]
+        }
+      }
+    }, 
+    "MyApiDeployment1ec85a4a5b": {
+      "Type": "AWS::ApiGateway::Deployment", 
+      "Properties": {
+        "RestApiId": {
+          "Ref": "MyApi"
+        }, 
+        "Description": "RestApi deployment id: 1ec85a4a5beec4d7a1ac8312f6d0f587a62b2c6f", 
+        "StageName": "Stage"
+      }
+    }, 
+    "HelloDynamoFunctionRole": {
+      "Type": "AWS::IAM::Role", 
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17", 
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ], 
+              "Effect": "Allow", 
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }, 
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ], 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ]
+      }
+    }, 
+    "CreateBookFunction": {
+      "Type": "AWS::Lambda::Function", 
+      "Properties": {
+        "Code": {
+          "S3Bucket": "dev-bucket-321", 
+          "S3Key": "c3d96df6cd9c33a65470f1bb9479dabf"
+        }, 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ], 
+        "Handler": "handlers.put_item_handler", 
+        "Role": {
+          "Fn::GetAtt": [
+            "CreateBookFunctionRole", 
+            "Arn"
+          ]
+        }, 
+        "Timeout": 3, 
+        "Runtime": "python3.8"
+      }
+    }, 
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket", 
+      "Properties": {
+        "PublicAccessBlockConfiguration": {
+          "RestrictPublicBuckets": true
+        }, 
+        "BucketName": {
+          "Ref": "S3BucketName"
+        }
+      }
+    }, 
+    "HelloDynamoFunction": {
+      "Type": "AWS::Lambda::Function", 
+      "Properties": {
+        "Code": {
+          "S3Bucket": "dev-bucket-321", 
+          "S3Key": "c3d96df6cd9c33a65470f1bb9479dabf"
+        }, 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ], 
+        "Handler": "handlers.test_lambda_handler", 
+        "Role": {
+          "Fn::GetAtt": [
+            "HelloDynamoFunctionRole", 
+            "Arn"
+          ]
+        }, 
+        "Timeout": 3, 
+        "Runtime": "python3.8"
+      }
+    }, 
+    "HelloWorldFunctionRole": {
+      "Type": "AWS::IAM::Role", 
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17", 
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ], 
+              "Effect": "Allow", 
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }, 
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ], 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ]
+      }
+    }, 
+    "MyCognitoUserPoolApiClient": {
+      "Type": "AWS::Cognito::UserPoolClient", 
+      "Properties": {
+        "GenerateSecret": true, 
+        "AllowedOAuthScopes": [
+          "api/generic"
+        ], 
+        "UserPoolId": {
+          "Ref": "MyCognitoUserPool"
+        }, 
+        "AllowedOAuthFlowsUserPoolClient": true, 
+        "AllowedOAuthFlows": [
+          "client_credentials"
+        ], 
+        "SupportedIdentityProviders": [
+          "COGNITO"
+        ], 
+        "ClientName": {
+          "Ref": "CognitoUserPoolApiClientName"
+        }
+      }
+    }, 
+    "HelloWorldFunction": {
+      "Type": "AWS::Lambda::Function", 
+      "Properties": {
+        "Code": {
+          "S3Bucket": "dev-bucket-321", 
+          "S3Key": "7920498ac3eef5552a3a04b18935ac4d"
+        }, 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ], 
+        "Handler": "app.lambda_handler", 
+        "Role": {
+          "Fn::GetAtt": [
+            "HelloWorldFunctionRole", 
+            "Arn"
+          ]
+        }, 
+        "Timeout": 3, 
+        "Runtime": "python3.8"
+      }
+    }, 
+    "TestSwaggerFunctionHelloWorldPermissionDev": {
+      "Type": "AWS::Lambda::Permission", 
+      "Properties": {
+        "Action": "lambda:InvokeFunction", 
+        "Principal": "apigateway.amazonaws.com", 
+        "FunctionName": {
+          "Ref": "TestSwaggerFunction"
+        }, 
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/POST/swagger", 
+            {
+              "__Stage__": "*", 
+              "__ApiId__": {
+                "Ref": "MyApi"
+              }
+            }
+          ]
+        }
+      }
+    }, 
+    "HelloWorldFunctionHelloWorldPermissionDev": {
+      "Type": "AWS::Lambda::Permission", 
+      "Properties": {
+        "Action": "lambda:InvokeFunction", 
+        "Principal": "apigateway.amazonaws.com", 
+        "FunctionName": {
+          "Ref": "HelloWorldFunction"
+        }, 
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/GET/hello", 
+            {
+              "__Stage__": "*", 
+              "__ApiId__": {
+                "Ref": "MyApi"
+              }
+            }
+          ]
+        }
+      }
+    }, 
+    "CreateBookFunctionRole": {
+      "Type": "AWS::IAM::Role", 
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17", 
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ], 
+              "Effect": "Allow", 
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }, 
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ], 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ]
+      }
+    }, 
+    "MyCognitoUserPoolClient": {
+      "Type": "AWS::Cognito::UserPoolClient", 
+      "Properties": {
+        "GenerateSecret": false, 
+        "AllowedOAuthScopes": [
+          "email", 
+          "openid"
+        ], 
+        "UserPoolId": {
+          "Ref": "MyCognitoUserPool"
+        }, 
+        "AllowedOAuthFlows": [
+          "code", 
+          "implicit"
+        ], 
+        "LogoutURLs": [
+          "https://mysite-321.s3.amazonaws.com/index.html"
+        ], 
+        "AllowedOAuthFlowsUserPoolClient": true, 
+        "CallbackURLs": [
+          "https://mysite-321.s3.amazonaws.com/index.html"
+        ], 
+        "SupportedIdentityProviders": [
+          "COGNITO"
+        ], 
+        "ClientName": {
+          "Ref": "CognitoUserPoolClientName"
+        }
+      }
+    }, 
+    "HelloDynamoFunctionHelloWorldPermissionDev": {
+      "Type": "AWS::Lambda::Permission", 
+      "Properties": {
+        "Action": "lambda:InvokeFunction", 
+        "Principal": "apigateway.amazonaws.com", 
+        "FunctionName": {
+          "Ref": "HelloDynamoFunction"
+        }, 
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/POST/dynamo", 
+            {
+              "__Stage__": "*", 
+              "__ApiId__": {
+                "Ref": "MyApi"
+              }
+            }
+          ]
+        }
+      }
+    }, 
+    "DynamoDBTable": {
+      "Type": "AWS::DynamoDB::Table", 
+      "Properties": {
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "name"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "author"
+          }
+        ], 
+        "TableName": {
+          "Ref": "DynamoDBTableName"
+        }, 
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "name", 
+            "AttributeType": "S"
+          }, 
+          {
+            "AttributeName": "author", 
+            "AttributeType": "S"
+          }
+        ], 
+        "ProvisionedThroughput": {
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }
+      }
+    }, 
+    "TestSwaggerFunctionRole": {
+      "Type": "AWS::IAM::Role", 
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17", 
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ], 
+              "Effect": "Allow", 
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }, 
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ], 
+        "Tags": [
+          {
+            "Value": "SAM", 
+            "Key": "lambda:createdBy"
+          }
+        ]
+      }
+    }, 
+    "MyApi": {
+      "Type": "AWS::ApiGateway::RestApi", 
+      "Properties": {
+        "Body": {
+          "info": {
+            "version": "1.0", 
+            "title": {
+              "Ref": "AWS::StackName"
+            }
+          },
+          "x-amazon-apigateway-request-validators" : {
+            "body" : {
+              "validateRequestBody" : true,
+              "validateRequestParameters" : false
+            },
+            "params-only" : {
+              "validateRequestBody" : false,
+              "validateRequestParameters" : true
+            }
+          },
+          "paths": {
+            "/dynamo": {
+              "post": {
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST", 
+                  "type": "aws_proxy", 
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloDynamoFunction.Arn}/invocations"
+                  }
+                }, 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "responses": {}
+              }, 
+              "options": {
+                "responses": {
+                  "200": {
+                    "headers": {
+                      "Access-Control-Allow-Origin": {
+                        "type": "string"
+                      }, 
+                      "Access-Control-Allow-Methods": {
+                        "type": "string"
+                      }
+                    }, 
+                    "description": "Default response for CORS method"
+                  }
+                }, 
+                "produces": [
+                  "application/json"
+                ], 
+                "x-amazon-apigateway-integration": {
+                  "type": "mock", 
+                  "requestTemplates": {
+                    "application/json": "{\n  \"statusCode\" : 200\n}\n"
+                  }, 
+                  "responses": {
+                    "default": {
+                      "statusCode": "200", 
+                      "responseTemplates": {
+                        "application/json": "{}\n"
+                      }, 
+                      "responseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'", 
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                      }
+                    }
+                  }
+                }, 
+                "summary": "CORS support", 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            }, 
+            "/swagger": {
+              "post": {
+                "x-amazon-apigateway-request-validator": "body",
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST", 
+                  "type": "aws_proxy", 
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestSwaggerFunction.Arn}/invocations"
+                  }
+                }, 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "parameters": [
+                  {
+                    "required": true, 
+                    "in": "body", 
+                    "name": "book", 
+                    "schema": {
+                      "$ref": "#/definitions/book"
+                    }
+                  }
+                ], 
+                "responses": {}
+              }, 
+              "options": {
+                "responses": {
+                  "200": {
+                    "headers": {
+                      "Access-Control-Allow-Origin": {
+                        "type": "string"
+                      }, 
+                      "Access-Control-Allow-Methods": {
+                        "type": "string"
+                      }
+                    }, 
+                    "description": "Default response for CORS method"
+                  }
+                }, 
+                "produces": [
+                  "application/json"
+                ], 
+                "x-amazon-apigateway-integration": {
+                  "type": "mock", 
+                  "requestTemplates": {
+                    "application/json": "{\n  \"statusCode\" : 200\n}\n"
+                  }, 
+                  "responses": {
+                    "default": {
+                      "statusCode": "200", 
+                      "responseTemplates": {
+                        "application/json": "{}\n"
+                      }, 
+                      "responseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'", 
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                      }
+                    }
+                  }
+                }, 
+                "summary": "CORS support", 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            }, 
+            "/book": {
+              "post": {
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST", 
+                  "type": "aws_proxy", 
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateBookFunction.Arn}/invocations"
+                  }
+                }, 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "responses": {}
+              }, 
+              "options": {
+                "responses": {
+                  "200": {
+                    "headers": {
+                      "Access-Control-Allow-Origin": {
+                        "type": "string"
+                      }, 
+                      "Access-Control-Allow-Methods": {
+                        "type": "string"
+                      }
+                    }, 
+                    "description": "Default response for CORS method"
+                  }
+                }, 
+                "produces": [
+                  "application/json"
+                ], 
+                "x-amazon-apigateway-integration": {
+                  "type": "mock", 
+                  "requestTemplates": {
+                    "application/json": "{\n  \"statusCode\" : 200\n}\n"
+                  }, 
+                  "responses": {
+                    "default": {
+                      "statusCode": "200", 
+                      "responseTemplates": {
+                        "application/json": "{}\n"
+                      }, 
+                      "responseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'", 
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                      }
+                    }
+                  }
+                }, 
+                "summary": "CORS support", 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            }, 
+            "/hello": {
+              "options": {
+                "responses": {
+                  "200": {
+                    "headers": {
+                      "Access-Control-Allow-Origin": {
+                        "type": "string"
+                      }, 
+                      "Access-Control-Allow-Methods": {
+                        "type": "string"
+                      }
+                    }, 
+                    "description": "Default response for CORS method"
+                  }
+                }, 
+                "produces": [
+                  "application/json"
+                ], 
+                "x-amazon-apigateway-integration": {
+                  "type": "mock", 
+                  "requestTemplates": {
+                    "application/json": "{\n  \"statusCode\" : 200\n}\n"
+                  }, 
+                  "responses": {
+                    "default": {
+                      "statusCode": "200", 
+                      "responseTemplates": {
+                        "application/json": "{}\n"
+                      }, 
+                      "responseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'", 
+                        "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'"
+                      }
+                    }
+                  }
+                }, 
+                "summary": "CORS support", 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "consumes": [
+                  "application/json"
+                ]
+              }, 
+              "get": {
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST", 
+                  "type": "aws_proxy", 
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations"
+                  }
+                }, 
+                "security": [
+                  {
+                    "MyCognitoAuthorizer": [
+                      "api/generic"
+                    ]
+                  }
+                ], 
+                "responses": {}
+              }
+            }
+          }, 
+          "swagger": "2.0", 
+          "securityDefinitions": {
+            "MyCognitoAuthorizer": {
+              "in": "header", 
+              "type": "apiKey", 
+              "name": "Authorization", 
+              "x-amazon-apigateway-authorizer": {
+                "providerARNs": [
+                  {
+                    "Fn::GetAtt": [
+                      "MyCognitoUserPool", 
+                      "Arn"
+                    ]
+                  }
+                ], 
+                "type": "cognito_user_pools"
+              }, 
+              "x-amazon-apigateway-authtype": "cognito_user_pools"
+            }
+          }, 
+          "definitions": {
+            "book": {
+              "required": [
+                "name", 
+                "author"
+              ], 
+              "type": "object", 
+              "properties": {
+                "name": {
+                  "type": "string", 
+                  "format": "int64"
+                }, 
+                "author": {
+                  "type": "string", 
+                  "description": "author"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
