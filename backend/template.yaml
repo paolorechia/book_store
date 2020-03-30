@@ -39,20 +39,20 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Dev
-      Models:
-        Book:
-          required:
-          - name
-          - author
-          type: object
-          properties:
-            name:
-              type: string
-              format: int64
-            author:
-              type: string
-              description: author
-      # Cors: "'*'"
+      # Models:
+      #   Book:
+      #     required:
+      #     - name
+      #     - author
+      #     type: object
+      #     properties:
+      #       name:
+      #         type: string
+      #         format: int64
+      #       author:
+      #         type: string
+      #         description: author
+      Cors: "'*'"
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
@@ -72,6 +72,67 @@ Resources:
               Throttle:
                 BurstLimit: 100
                 RateLimit: 10
+
+
+  BookModel:
+    Type: 'AWS::ApiGateway::Model'
+    Properties:
+      RestApiId: !Ref MyApi
+      ContentType: application/json
+      Description: Schema for Books
+      Name: BookModel
+      Schema:
+        $schema: 'http://json-schema.org/draft-04/schema#'
+        title: BookSchema
+        type: object
+        required:
+        - name
+        - author
+        properties:
+          name:
+            type: string
+          author:
+            type: string
+
+
+  ApiRequestBodyValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties: 
+      Name: body
+      RestApiId: !Ref MyApi
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
+      
+  CloudResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref MyApi
+      ParentId: !GetAtt
+        - MyApi
+        - RootResourceId
+      PathPart: cloud
+
+  CloudPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties: 
+      ApiKeyRequired: false
+      AuthorizationScopes: 
+        - api/generic
+      AuthorizationType: COGNITO_USER_POOLS
+      HttpMethod: POST
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestCloudFormationFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+      RequestModels:
+        json/application : !Ref BookModel
+      RequestValidatorId: !Ref ApiRequestBodyValidator
+      ResourceId: !Ref CloudResource
+      RestApiId: !Ref MyApi
+
 
 # Cognito Setup
   MyCognitoUserPool:
@@ -167,66 +228,85 @@ Resources:
         RestrictPublicBuckets: true
 
 # Functions
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: hello_world/
-      Handler: app.lambda_handler
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /hello
-            Method: get
+  # HelloWorldFunction:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     CodeUri: hello_world/
+  #     Handler: app.lambda_handler
+  #     Events:
+  #       HelloWorld:
+  #         Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #         Properties:
+  #           RestApiId: !Ref MyApi
+  #           Path: /hello
+  #           Method: get
 
-  HelloDynamoFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: dynamo/
-      Handler: handlers.test_lambda_handler
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /dynamo
-            Method: post
+  # HelloDynamoFunction:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     CodeUri: dynamo/
+  #     Handler: handlers.test_lambda_handler
+  #     Events:
+  #       HelloWorld:
+  #         Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #         Properties:
+  #           RestApiId: !Ref MyApi
+  #           Path: /dynamo
+  #           Method: post
 
-  CreateBookFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: dynamo/
-      Handler: handlers.put_item_handler
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /book
-            Method: post
+  # CreateBookFunction:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     CodeUri: dynamo/
+  #     Handler: handlers.put_item_handler
+  #     Events:
+  #       HelloWorld:
+  #         Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #         Properties:
+  #           RestApiId: !Ref MyApi
+  #           Path: /book
+  #           Method: post
 
-  TestSwaggerFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  # TestSwaggerFunction:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     CodeUri: swagger_example/
+  #     Handler: handlers.handler
+  #     Events:
+  #       HelloWorld:
+  #         Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #         Properties:
+  #           RestApiId: !Ref MyApi
+  #           Path: /swagger
+  #           Method: post
+  #           # RequestModel:
+  #           #   Model: Book
+  #           #   Required: true
+
+  TestCloudFormationFunction:
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: swagger_example/
       Handler: handlers.handler
       Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        Duh:
+          Type: Api
           Properties:
             RestApiId: !Ref MyApi
-            Path: /swagger
+            Path: /duh
             Method: post
-            RequestModel:
-              Model: Book
-              Required: true
-
+            # RequestModel:
+            #   Model: Book
+            #   Required: true
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+
+  CloudResourceId:
+    Description: "Test"
+    Value: !Ref CloudResource
 
   CognitoUserPoolId:
     Description: "Cognito User Pool Id"
