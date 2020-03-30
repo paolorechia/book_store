@@ -19,9 +19,29 @@
   },
   "servers": [
     {
-      "url": "https://api.paolorechia.de/v0"
+      "url": "/{basePath}",
+      "description": "AWS API Gateway",
+      "variables": {
+        "basePath": {
+          "default": "/v1"
+        }
+      }
+    },
+    {
+      "url": "https://api.paolorechia.de/v1",
+      "description": "With DNS"
     }
   ],
+  "x-amazon-apigateway-request-validators\"": {
+    "all": {
+      "validateRequestBody": true,
+      "validateRequestParameters": true
+    },
+    "params-only": {
+      "validateRequestBody": false,
+      "validateRequestParameters": true
+    }
+  },
   "tags": [
     {
       "name": "book",
@@ -96,7 +116,7 @@
         "security": [
           {
             "bookstore_auth": [
-              "api:generic"
+              "api/generic"
             ]
           }
         ],
@@ -125,7 +145,7 @@
         "security": [
           {
             "bookstore_auth": [
-              "api:generic"
+              "api/generic"
             ]
           }
         ]
@@ -256,7 +276,7 @@
         "security": [
           {
             "bookstore_auth": [
-              "api:generic"
+              "api/generic"
             ]
           }
         ]
@@ -314,7 +334,7 @@
         "security": [
           {
             "bookstore_auth": [
-              "api:generic"
+              "api/generic"
             ]
           }
         ]
@@ -358,13 +378,13 @@
         "type": "oauth2",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "https://cognito/oauth2/authorize",
-            "tokenUrl": "https://oauth2/token"
+            "authorizationUrl": "https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/authorize",
+            "tokenUrl": "https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/token"
           },
           "clientCredentials": {
-            "tokenUrl": "https://cognito/oauth2/token",
+            "tokenUrl": "https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/token",
             "scopes": {
-              "api:generic": "api auth"
+              "api/generic": "api auth"
             }
           }
         }
