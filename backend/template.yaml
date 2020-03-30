@@ -128,7 +128,7 @@ Resources:
 # DynamoDB
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
-    Properties: 
+    Properties:
       AttributeDefinitions: 
         - AttributeName: name
           AttributeType: S
@@ -192,6 +192,21 @@ Resources:
             RestApiId: !Ref MyApi
             Path: /book
             Method: post
+
+  TestSwaggerFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: swagger_example/
+      Handler: handlers.handler
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /swagger
+            Method: post
+
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM

@@ -1,0 +1,374 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Book Store",
+    "description": "This is a sample book store app built with a serverless stack.",
+    "termsOfService": "http://api.paolorechia.de/terms/",
+    "contact": {
+      "email": "developer@paolorechia.de"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0"
+  },
+  "externalDocs": {
+    "description": "Github repository",
+    "url": "https://github.com/paolorechia/book_store"
+  },
+  "servers": [
+    {
+      "url": "https://api.paolorechia.de/v0"
+    }
+  ],
+  "tags": [
+    {
+      "name": "book",
+      "description": "Everything about your books"
+    }
+  ],
+  "paths": {
+    "/swagger": {
+      "post": {
+        "tags": [
+          "test"
+        ],
+        "summary": "Testing swagger",
+        "operationId": "testswagger",
+        "requestBody": {
+          "description": "book object to be added",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Book"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Validation worked"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/book": {
+      "post": {
+        "tags": [
+          "book"
+        ],
+        "summary": "Create a new book or update an existing book",
+        "operationId": "updatebook",
+        "requestBody": {
+          "description": "book object that needs to be added to the store",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Book"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid book supplied",
+            "content": {}
+          },
+          "404": {
+            "description": "book not found",
+            "content": {}
+          },
+          "405": {
+            "description": "Method not allowed",
+            "content": {}
+          }
+        },
+        "security": [
+          {
+            "bookstore_auth": [
+              "api:generic"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      },
+      "get": {
+        "tags": [
+          "book"
+        ],
+        "summary": "Get all available books",
+        "operationId": "getbooks",
+        "responses": {
+          "400": {
+            "description": "Invalid book supplied",
+            "content": {}
+          },
+          "404": {
+            "description": "book not found",
+            "content": {}
+          },
+          "405": {
+            "description": "Method not allowed",
+            "content": {}
+          }
+        },
+        "security": [
+          {
+            "bookstore_auth": [
+              "api:generic"
+            ]
+          }
+        ]
+      }
+    },
+    "/book/{name}": {
+      "get": {
+        "tags": [
+          "book"
+        ],
+        "summary": "Find book by name",
+        "description": "Returns a single book",
+        "operationId": "getBookByName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of book to return",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied",
+            "content": {}
+          },
+          "404": {
+            "description": "book not found",
+            "content": {}
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book"
+        ],
+        "summary": "Updates a book in the store with form data",
+        "operationId": "updatebookWithForm",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of book that needs to be updated",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Updated name of the book"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Updated status of the book"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "405": {
+            "description": "Invalid input",
+            "content": {}
+          }
+        },
+        "security": [
+          {
+            "bookstore_auth": [
+              "write:books",
+              "read:books"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "book"
+        ],
+        "summary": "Deletes a book",
+        "operationId": "deleteBook",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of book to return",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid ID supplied",
+            "content": {}
+          },
+          "404": {
+            "description": "book not found",
+            "content": {}
+          }
+        },
+        "security": [
+          {
+            "bookstore_auth": [
+              "api:generic"
+            ]
+          }
+        ]
+      }
+    },
+    "/book/{name}/uploadImage": {
+      "post": {
+        "tags": [
+          "book"
+        ],
+        "summary": "uploads an image",
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Name of book to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "additionalMetadata": {
+                    "type": "string",
+                    "description": "Additional data to pass to server"
+                  },
+                  "file": {
+                    "type": "string",
+                    "description": "file to upload",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bookstore_auth": [
+              "api:generic"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Book": {
+        "required": [
+          "name",
+          "author"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "format": "int64"
+          },
+          "author": {
+            "type": "string",
+            "description": "author"
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bookstore_auth": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://cognito/oauth2/authorize",
+            "tokenUrl": "https://oauth2/token"
+          },
+          "clientCredentials": {
+            "tokenUrl": "https://cognito/oauth2/token",
+            "scopes": {
+              "api:generic": "api auth"
+            }
+          }
+        }
+      }
+    }
+  }
+}
