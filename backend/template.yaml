@@ -39,20 +39,134 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Dev
-      Models:
-        Book:
-          required:
-          - name
-          - author
-          type: object
-          properties:
-            name:
-              type: string
-              format: int64
-            author:
-              type: string
-              description: author
+      # Models:
+      #   Book:
+      #     required:
+      #     - name
+      #     - author
+      #     type: object
+      #     properties:
+      #       name:
+      #         type: string
+      #         format: int64
+      #       author:
+      #         type: string
+      #         description: author
       # Cors: "'*'"
+      DefinitionBody:
+        openapi: 3.0.1
+        info:
+          title: Book Store
+          description: 'This is a sample book store app built with a serverless stack.'
+          termsOfService: http://api.paolorechia.de/terms/
+          contact:
+            email: developer@paolorechia.de
+          license:
+            name: Apache 2.0
+            url: http://www.apache.org/licenses/LICENSE-2.0.html
+          version: 1.0.0
+        externalDocs:
+          description: Github repository
+          url: https://github.com/paolorechia/book_store
+        servers:
+        - url: "/{basePath}"
+          description: AWS API Gateway
+          variables:
+            basePath:
+              "default": "/v1"
+        - url: https://api.paolorechia.de/v1
+          description: With DNS
+        x-amazon-apigateway-request-validators:
+          all:
+            validateRequestBody: true
+            validateRequestParameters: true
+          body:
+            validateRequestBody: true
+            validateRequestParameters: false
+          params-only:
+            validateRequestBody: false
+            validateRequestParameters: true
+        tags:
+        - name: book
+          description: Everything about your books
+        components:
+          schemas:
+            Book:
+              required:
+              - name
+              - author
+              type: object
+              properties:
+                name:
+                  type: string
+                  format: int64
+                author:
+                  type: string
+                  description: author
+            ApiResponse:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  format: int32
+                message:
+                  type: string
+        securitySchemes:
+          bookstore_auth:
+            type: oauth2
+            flows:
+              authorizationCode:
+                authorizationUrl: https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/authorize
+                tokenUrl: https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/token
+              clientCredentials:
+                tokenUrl: https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/token
+                scopes:
+                  api/generic: api auth          
+        paths:
+          /swagger:
+            post:
+              tags:
+              - test
+              summary: Testing swagger
+              operationId: testswagger
+              x-amazon-apigateway-request-validators: "body"
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestSwaggerFunction.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+              requestBody:
+                description: book object to be added
+                content:
+                  application/json:
+                    schema:
+                      name: "Book"
+                      required:
+                        - name
+                        - author
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          format: int64
+                        author:
+                          type: string
+                          description: author
+                          responses:
+                            "200":
+                              description: OK
+                            "400":
+                              description: Validation worked
+                            "401":
+                              description: Not authorized
+                            "403":
+                              description: Forbidden
+              security:
+              - bookstore_auth:
+                - api/generic
+
+
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
@@ -218,9 +332,9 @@ Resources:
             RestApiId: !Ref MyApi
             Path: /swagger
             Method: post
-            RequestModel:
-              Model: Book
-              Required: true
+            # RequestModel:
+            #   Model: Book
+            #   Required: true
 
 
 Outputs:
