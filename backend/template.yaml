@@ -94,7 +94,6 @@ Resources:
           author:
             type: string
 
-
   ApiRequestBodyValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties: 
@@ -125,6 +124,9 @@ Resources:
         IntegrationHttpMethod: POST
         Uri:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestCloudFormationFunction.Arn}/invocations
+      responses:
+        default:
+          statusCode: 200
       MethodResponses:
         - StatusCode: 200
       RequestModels:
@@ -284,20 +286,14 @@ Resources:
   #           #   Required: true
 
   TestCloudFormationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: swagger_example/
-      Handler: handlers.handler
-      Events:
-        Duh:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MyApi
-            Path: /duh
-            Method: post
-            # RequestModel:
-            #   Model: Book
-            #   Required: true
+    Type: "AWS::Lambda::Function"
+    Properties: 
+      Handler: "index.handler"
+      Role: "arn:aws:iam::743396504149:role/LambdaBasicExecutionRole"
+      Code: 
+        ZipFile: test.zip
+      Runtime: "python3.8"
+      Timeout: 5
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -332,11 +328,11 @@ Outputs:
     Description: "API Gateway endpoint URL for Dev stage for Hello World function"
     Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/hello/"
 
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
+  # HelloWorldFunction:
+  #   Description: "Hello World Lambda Function ARN"
+  #   Value: !GetAtt HelloWorldFunction.Arn
 
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  # HelloWorldFunctionIamRole:
+  #   Description: "Implicit IAM Role created for Hello World function"
+  #   Value: !GetAtt HelloWorldFunctionRole.Arn
 
