@@ -221,6 +221,7 @@ Resources:
             RequestModel:
               Model: Book
               Required: true
+            
 
 
 Outputs:

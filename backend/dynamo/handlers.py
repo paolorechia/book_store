@@ -3,35 +3,24 @@ import boto3
 
 from libs import repository
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('DevTable')
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("DevTable")
 
 
 def test_lambda_handler(event, context):
-    table.put_item(
-        Item={
-            'name': 'Novo',
-            'author': 'NovoAutor'
-        })
-    response = table.get_item(
-        Key={
-            'name': 'O Hobbit',
-            'author': 'J.R.R. Tolkien'
-        }
-    )
+    table.put_item(Item={"name": "Novo", "author": "NovoAutor"})
+    response = table.get_item(Key={"name": "O Hobbit", "author": "J.R.R. Tolkien"})
     print(response)
-    item = response['Item']
+    item = response["Item"]
     print(item)
     return {
         "statusCode": 201,
-        "body": json.dumps({
-            "message": item,
-        }),
+        "body": json.dumps({"message": item,}),
     }
 
 
 def put_item_handler(event, context):
-    request_body = json.loads(event['body'])
+    request_body = json.loads(event["body"])
     print(request_body)
     context = repository.put_context()
     print("Entering context")
