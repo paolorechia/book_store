@@ -15,7 +15,7 @@ Parameters:
   CognitoUserPoolName:
     Type: String
     Default: DevPool
-  
+
   CognitoUserPoolClientName:
     Type: String
     Default: DevPoolClient
@@ -49,6 +49,7 @@ Resources:
           properties:
             name:
               type: string
+              format: int64
             author:
               type: string
               description: author
@@ -57,11 +58,14 @@ Resources:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
           MyCognitoAuthorizer:
-            UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+            UserPoolArn:
+              Fn::GetAtt:
+              - MyCognitoUserPool
+              - Arn
             Identity:
               Header: Authorization
             AuthorizationScopes:
-              - api/generic
+            - api/generic
             UsagePlan:
               UsagePlanName: DevUsagePlan
               CreateUsagePlan: PER_API
@@ -77,132 +81,144 @@ Resources:
   MyCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Ref CognitoUserPoolName
+      UserPoolName:
+        Ref: CognitoUserPoolName
       Policies:
         PasswordPolicy:
           MinimumLength: 8
       UsernameAttributes:
-        - email
+      - email
       Schema:
-        - AttributeDataType: String
-          Name: email
-          Required: false
+      - AttributeDataType: String
+        Name: email
+        Required: false
 
   MyCognitoDomain:
-      Type: AWS::Cognito::UserPoolDomain
-      Properties: 
-        Domain: mytest-321
-        UserPoolId: !Ref MyCognitoUserPool
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: mytest-321
+      UserPoolId:
 
+        Ref: MyCognitoUserPool
   MyCognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      UserPoolId: !Ref MyCognitoUserPool
-      ClientName: !Ref CognitoUserPoolClientName
+      UserPoolId:
+        Ref: MyCognitoUserPool
+      ClientName:
+        Ref: CognitoUserPoolClientName
       GenerateSecret: false
       SupportedIdentityProviders:
-        - COGNITO
+      - COGNITO
       AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthFlows:
-        - code
-        - implicit
+      - code
+      - implicit
       AllowedOAuthScopes:
-        - email
-        - openid
+      - email
+      - openid
       CallbackURLs:
-        - https://mysite-321.s3.amazonaws.com/index.html
+      - https://mysite-321.s3.amazonaws.com/index.html
       LogoutURLs:
-        - https://mysite-321.s3.amazonaws.com/index.html
+      - https://mysite-321.s3.amazonaws.com/index.html
 
   MyCognitoUserPoolApiClientResourceServer:
     Type: AWS::Cognito::UserPoolResourceServer
-    Properties: 
+    Properties:
       Identifier: api
       Name: Api Server
-      Scopes: 
-        - ScopeDescription: Generic Description
-          ScopeName: "generic"
-      UserPoolId: !Ref MyCognitoUserPool
+      Scopes:
+      - ScopeDescription: Generic Description
+        ScopeName: generic
+      UserPoolId:
 
+        Ref: MyCognitoUserPool
   MyCognitoUserPoolApiClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      UserPoolId: !Ref MyCognitoUserPool
-      ClientName: !Ref CognitoUserPoolApiClientName
+      UserPoolId:
+        Ref: MyCognitoUserPool
+      ClientName:
+        Ref: CognitoUserPoolApiClientName
       GenerateSecret: true
       SupportedIdentityProviders:
-        - COGNITO
+      - COGNITO
       AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthFlows:
-        - client_credentials
+      - client_credentials
       AllowedOAuthScopes:
-        - api/generic
+      - api/generic
 
 # DynamoDB
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      AttributeDefinitions: 
-        - AttributeName: name
-          AttributeType: S
-        - AttributeName: author
-          AttributeType: S
+      AttributeDefinitions:
+      - AttributeName: name
+        AttributeType: S
+      - AttributeName: author
+        AttributeType: S
       KeySchema:
-        - AttributeName: name
-          KeyType: HASH
-        - AttributeName: author
-          KeyType: RANGE
-      ProvisionedThroughput: 
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-      TableName: !Ref DynamoDBTableName
+      - AttributeName: name
+        KeyType: HASH
+      - AttributeName: author
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName:
 
 
 # S3 Photo Bucket
+        Ref: DynamoDBTableName
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref S3BucketName
-      PublicAccessBlockConfiguration: 
+      BucketName:
+        Ref: S3BucketName
+      PublicAccessBlockConfiguration:
         RestrictPublicBuckets: true
 
 # Functions
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: hello_world/
+      CodeUri: s3://cfn-bucket-321/7920498ac3eef5552a3a04b18935ac4d
       Handler: app.lambda_handler
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId:
+              Ref: MyApi
             Path: /hello
             Method: get
 
   HelloDynamoFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: dynamo/
+      CodeUri: s3://cfn-bucket-321/c3d96df6cd9c33a65470f1bb9479dabf
       Handler: handlers.test_lambda_handler
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId:
+              Ref: MyApi
             Path: /dynamo
             Method: post
 
   CreateBookFunction:
-    Type: AWS::Serverless::Function
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: dynamo/
+      CodeUri: s3://cfn-bucket-321/c3d96df6cd9c33a65470f1bb9479dabf
       Handler: handlers.put_item_handler
       Events:
         HelloWorld:
-          Type: Api 
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId:
+              Ref: MyApi
             Path: /book
             Method: post
             RequestModel:
@@ -213,13 +229,14 @@ Resources:
   TestSwaggerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: swagger_example/
+      CodeUri: s3://cfn-bucket-321/5c488f9f19ef5c31856ad28ea583b96b
       Handler: handlers.handler
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId:
+              Ref: MyApi
             Path: /swagger
             Method: post
             RequestModel:
@@ -233,34 +250,46 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
 
   CognitoUserPoolId:
-    Description: "Cognito User Pool Id"
-    Value: !Ref MyCognitoUserPool
+    Description: Cognito User Pool Id
+    Value:
 
+      Ref: MyCognitoUserPool
   CognitoUserPoolClientId:
-    Description: "Cognito User Pool Client Id"
-    Value: !Ref MyCognitoUserPoolClient
+    Description: Cognito User Pool Client Id
+    Value:
 
+      Ref: MyCognitoUserPoolClient
   CognitoUserPoolClientApiId:
-    Description: "Cognito User Pool Client Api Id"
-    Value: !Ref MyCognitoUserPoolApiClient
+    Description: Cognito User Pool Client Api Id
+    Value:
 
+      Ref: MyCognitoUserPoolApiClient
   DynamoDBTableName:
-    Description: "Dynamo Table Name"
-    Value: !Ref DynamoDBTable
+    Description: Dynamo Table Name
+    Value:
 
+      Ref: DynamoDBTable
   S3Bucket:
-    Description: "S3Bucket"
-    Value: !Ref S3Bucket
+    Description: S3Bucket
+    Value:
 
+      Ref: S3Bucket
   HelloWorldApi:
-    Description: "API Gateway endpoint URL for Dev stage for Hello World function"
-    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/hello/"
+    Description: API Gateway endpoint URL for Dev stage for Hello World function
+    Value:
 
+      Fn::Sub: https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/hello/
   HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
+    Description: Hello World Lambda Function ARN
+    Value:
 
+      Fn::GetAtt:
+      - HelloWorldFunction
+      - Arn
   HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+    Description: Implicit IAM Role created for Hello World function
+    Value:
 
+      Fn::GetAtt:
+      - HelloWorldFunctionRole
+      - Arn

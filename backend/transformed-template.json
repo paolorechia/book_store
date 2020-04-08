@@ -123,7 +123,7 @@
       "Type": "AWS::ApiGateway::Stage", 
       "Properties": {
         "DeploymentId": {
-          "Ref": "MyApiDeployment1ec85a4a5b"
+          "Ref": "MyApiDeployment4905a4915e"
         }, 
         "RestApiId": {
           "Ref": "MyApi"
@@ -135,7 +135,7 @@
       "Type": "AWS::Lambda::Function", 
       "Properties": {
         "Code": {
-          "S3Bucket": "dev-bucket-321", 
+          "S3Bucket": "cfn-bucket-321", 
           "S3Key": "5c488f9f19ef5c31856ad28ea583b96b"
         }, 
         "Tags": [
@@ -185,16 +185,6 @@
         }
       }
     }, 
-    "MyApiDeployment1ec85a4a5b": {
-      "Type": "AWS::ApiGateway::Deployment", 
-      "Properties": {
-        "RestApiId": {
-          "Ref": "MyApi"
-        }, 
-        "Description": "RestApi deployment id: 1ec85a4a5beec4d7a1ac8312f6d0f587a62b2c6f", 
-        "StageName": "Stage"
-      }
-    }, 
     "HelloDynamoFunctionRole": {
       "Type": "AWS::IAM::Role", 
       "Properties": {
@@ -229,7 +219,7 @@
       "Type": "AWS::Lambda::Function", 
       "Properties": {
         "Code": {
-          "S3Bucket": "dev-bucket-321", 
+          "S3Bucket": "cfn-bucket-321", 
           "S3Key": "c3d96df6cd9c33a65470f1bb9479dabf"
         }, 
         "Tags": [
@@ -264,7 +254,7 @@
       "Type": "AWS::Lambda::Function", 
       "Properties": {
         "Code": {
-          "S3Bucket": "dev-bucket-321", 
+          "S3Bucket": "cfn-bucket-321", 
           "S3Key": "c3d96df6cd9c33a65470f1bb9479dabf"
         }, 
         "Tags": [
@@ -340,7 +330,7 @@
       "Type": "AWS::Lambda::Function", 
       "Properties": {
         "Code": {
-          "S3Bucket": "dev-bucket-321", 
+          "S3Bucket": "cfn-bucket-321", 
           "S3Key": "7920498ac3eef5552a3a04b18935ac4d"
         }, 
         "Tags": [
@@ -358,6 +348,16 @@
         }, 
         "Timeout": 3, 
         "Runtime": "python3.8"
+      }
+    }, 
+    "MyApiDeployment4905a4915e": {
+      "Type": "AWS::ApiGateway::Deployment", 
+      "Properties": {
+        "RestApiId": {
+          "Ref": "MyApi"
+        }, 
+        "Description": "RestApi deployment id: 4905a4915e551c8712e4c2ef3f707c551a5c3a69", 
+        "StageName": "Stage"
       }
     }, 
     "TestSwaggerFunctionHelloWorldPermissionDev": {
@@ -554,17 +554,7 @@
             "title": {
               "Ref": "AWS::StackName"
             }
-          },
-          "x-amazon-apigateway-request-validators" : {
-            "body" : {
-              "validateRequestBody" : true,
-              "validateRequestParameters" : false
-            },
-            "params-only" : {
-              "validateRequestBody" : false,
-              "validateRequestParameters" : true
-            }
-          },
+          }, 
           "paths": {
             "/dynamo": {
               "post": {
@@ -634,14 +624,14 @@
             }, 
             "/swagger": {
               "post": {
-                "x-amazon-apigateway-request-validator": "body",
                 "x-amazon-apigateway-integration": {
                   "httpMethod": "POST", 
                   "type": "aws_proxy", 
                   "uri": {
                     "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestSwaggerFunction.Arn}/invocations"
                   }
-                },
+                }, 
+                "x-amazon-apigateway-request-validator": "BODY", 
                 "security": [
                   {
                     "MyCognitoAuthorizer": [
@@ -718,11 +708,22 @@
                     "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateBookFunction.Arn}/invocations"
                   }
                 }, 
+                "x-amazon-apigateway-request-validator": "BODY", 
                 "security": [
                   {
                     "MyCognitoAuthorizer": [
                       "api/generic"
                     ]
+                  }
+                ], 
+                "parameters": [
+                  {
+                    "required": true, 
+                    "in": "body", 
+                    "name": "book", 
+                    "schema": {
+                      "$ref": "#/definitions/book"
+                    }
                   }
                 ], 
                 "responses": {}
@@ -842,7 +843,6 @@
               }
             }
           }, 
-          "swagger": "2.0", 
           "securityDefinitions": {
             "MyCognitoAuthorizer": {
               "in": "header", 
@@ -879,6 +879,21 @@
                   "description": "author"
                 }
               }
+            }
+          }, 
+          "swagger": "2.0", 
+          "x-amazon-apigateway-request-validators": {
+            "BODY": {
+              "validateRequestParameters": false, 
+              "validateRequestBody": true
+            }, 
+            "FULL": {
+              "validateRequestParameters": true, 
+              "validateRequestBody": false
+            }, 
+            "PARAMS": {
+              "validateRequestParameters": true, 
+              "validateRequestBody": false
             }
           }
         }

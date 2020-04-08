@@ -1,0 +1,4 @@
+sam validate
+aws cloudformation package --template-file template.yaml --output-template-file output-template.yaml --s3-bucket dev-bucket-321
+sam-translate --template-file=output-template.yaml 
+aws cloudformation deploy --template-file transformed-template.json --capabilities CAPABILITY_NAMED_IAM --stack-name book-store-app
