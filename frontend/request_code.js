@@ -1,1 +1,0 @@
- curl 'https://test-321.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=code&client_id=1jsnr8nqjos33sfc403q0q0cnj&redirect_uri=https://mysite-321.s3.amazonaws.com/index.html' --dump-header t && cat t
