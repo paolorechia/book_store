@@ -1,0 +1,21 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Create Book Schema",
+  "required": ["name", "author"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "The book name",
+      "default": "",
+      "pattern": "^[a-zA-Z0-9 \\.]+$"
+    },
+    "author": {
+      "type": "string",
+      "title": "The book name",
+      "default": "",
+      "pattern": "^[a-zA-Z0-9 \\.]+$"
+    }
+  }
+}

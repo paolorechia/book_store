@@ -44,8 +44,23 @@ resources:
             WriteCapacityUnits: 1
 
 functions:
-  put_book:
-    handler: backend/put_book.put_item_handler
+  get_books:
+    handler: backend/handlers.get_books_handler
+    events:
+      - http:
+          path: books
+          method: get
+  
+
+  create_book:
+    handler: backend/handlers.create_book_handler
+    events:
+      - http:
+          path: books
+          method: put
+          request:
+            schema:
+              application/json: ${file(models/create_book.json)}
 
 
 package:
@@ -57,7 +72,11 @@ package:
     - frontend/**
     - package-lock.json
 
+
 custom:
+  client:
+    bucketName: test.paolorechia.de
+    distributionFolder: frontend
 
 
 #  This one deploys to CloudFront. Requires cache invalidation to propagate updates
@@ -65,9 +84,3 @@ custom:
 #    bucketName: mytest-123-bucket-321 # (see Configuration Parameters below)
 #    distributionFolder: frontend
 #    # [other configuration parameters] (see Configuration Parameters below)
-
-
-#  Deploys directly to S3 bucket (insecure HTTP)
-  client:
-    bucketName: test.paolorechia.de  # (see Configuration Parameters below)
-    distributionFolder: frontend

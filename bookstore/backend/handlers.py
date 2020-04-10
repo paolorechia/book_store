@@ -8,7 +8,7 @@ dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.getenv("DYNAMODB_TABLE"))
 
 
-def put_item_handler(event, context):
+def create_book_handler(event, context):
     print(event)
     if "body" not in event:
         raise Exception("Missing body")
@@ -21,3 +21,20 @@ def put_item_handler(event, context):
     print("Exited context")
     print(context.response)
     return context.response
+
+
+def get_books_handler(event, context):
+    result = table.scan()
+    books = []
+    for item in result["Items"]:
+        books .append({
+            "name": item["name"],
+            "author": item["author"],
+        })
+    response = {
+        "statusCode": 200,
+        "headers": {"Access-Control-Allow-Origin": "*"},
+        "body": json.dumps(books)
+    }
+    return response
+    

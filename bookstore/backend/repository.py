@@ -1,9 +1,16 @@
 import json
 
 
+
 class Responses:
     Created = {"statusCode": 201, "body": "Created!\n"}
     OK = {"statusCode": 200, "body": "OK\n"}
+
+
+class Headers:
+    CORS = {"Access-Control-Allow-Origin": "*"}
+
+
 
 
 class put_context:
@@ -20,6 +27,7 @@ class put_context:
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type:
             self.response = {
+                "headers": Headers.CORS,
                 "statusCode": 500,
                 "body": json.dumps(
                     {"message": "Creation failed: {}".format(str(exc_value)),}
@@ -28,22 +36,8 @@ class put_context:
         return True
 
 
-"""
-@contextmanager
-def put_context():
-    try:
-        yield
-        print("Created OK!")
-    except Exception as err:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "message": "Creation failed: {}".format(str(err)),
-            }),
-        }
-"""
-
-
 def put_item_into_table(table, input_dict):
     print("Putting...")
     table.put_item(Item=input_dict)
+
+ 
