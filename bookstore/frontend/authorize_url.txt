@@ -1,0 +1,1 @@
+https://mytest-321.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=code&client_id=6kr010lb4i9i3acduu3acpu28t&redirect_uri=https://dev.paolorechia.de

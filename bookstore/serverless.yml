@@ -10,6 +10,11 @@ provider:
   region: us-east-1
   environment:
      DYNAMODB_TABLE: bookstore_table
+     COGNITO_USERPOOL_NAME: ${self:provider.stage}_pool
+     COGNITO_USERPOOL_CLIENT_NAME: ${self:provider.stage}_pool_client
+     COGNITO_USERPOOL_API_CLIENT_NAME: ${self:provider.stage}_pool_api_client
+     WEB_DOMAIN: dev.paolorechia.de
+  
 
   iamRoleStatements:
     - Effect: "Allow"
@@ -23,8 +28,11 @@ provider:
       Resource:
         - arn:aws:dynamodb:us-east-1:*:table/${self:provider.environment.DYNAMODB_TABLE}
 
+
+# CloudFormation Templates
 resources:
   Resources:
+    # DynamoDB Table Setup
     bookstoreTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -43,6 +51,89 @@ resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+  # Cognito Setup
+    MyCognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:provider.environment.COGNITO_USERPOOL_NAME}
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+        UsernameAttributes:
+          - email
+        Schema:
+          - AttributeDataType: String
+            Name: email
+            Required: false
+
+    MyCognitoDomain:
+        Type: AWS::Cognito::UserPoolDomain
+        Properties: 
+          Domain: mytest-321
+          UserPoolId: !Ref MyCognitoUserPool
+
+    MyCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        UserPoolId: !Ref MyCognitoUserPool
+        ClientName: ${self:provider.environment.COGNITO_USERPOOL_CLIENT_NAME}
+        GenerateSecret: false
+        SupportedIdentityProviders:
+          - COGNITO
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthFlows:
+          - code
+          - implicit
+        AllowedOAuthScopes:
+          - email
+          - openid
+        CallbackURLs:
+          - https://${self:provider.environment.WEB_DOMAIN}
+        LogoutURLs:
+          - https://${self:provider.environment.WEB_DOMAIN}
+
+
+    MyCognitoUserPoolApiClientResourceServer:
+      Type: AWS::Cognito::UserPoolResourceServer
+      Properties: 
+        Identifier: api
+        Name: Api Server
+        Scopes: 
+          - ScopeDescription: Generic Description
+            ScopeName: "generic"
+        UserPoolId: !Ref MyCognitoUserPool
+
+
+#    API Client, cannot be created in the same stack for some reason
+#    MyCognitoUserPoolApiClient:
+#      Type: AWS::Cognito::UserPoolClient
+#      Properties:
+#        UserPoolId: !Ref MyCognitoUserPool
+#        ClientName: ${self:provider.environment.COGNITO_USERPOOL_API_CLIENT_NAME}
+#        GenerateSecret: true
+#        SupportedIdentityProviders:
+#          - COGNITO
+#        AllowedOAuthFlowsUserPoolClient: true
+#        AllowedOAuthFlows:
+#          - client_credentials
+#        AllowedOAuthScopes:
+#          - api/generic
+
+
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [MyCognitoUserPool, Arn]
+
+
 functions:
   get_books:
     handler: backend/handlers.get_books_handler
@@ -50,6 +141,10 @@ functions:
       - http:
           path: books
           method: get
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   
 
   create_book:
