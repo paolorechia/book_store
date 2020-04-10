@@ -2,3 +2,8 @@
 *.python-version
 backend/.aws-sam/*
 .mypy_cache/*
+node_modules/*
+bookstore/.env
+bookstore/backend/__pycache__/
+bookstore/node_modules/
+bookstore/package-lock.json
