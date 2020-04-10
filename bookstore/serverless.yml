@@ -1,8 +1,4 @@
 service: bookstore
-
-plugins:
-  - serverless-finch
-
 provider:
   name: aws
   runtime: python3.8
@@ -13,9 +9,11 @@ provider:
      COGNITO_USERPOOL_NAME: ${self:provider.stage}_pool
      COGNITO_USERPOOL_CLIENT_NAME: ${self:provider.stage}_pool_client
      COGNITO_USERPOOL_API_CLIENT_NAME: ${self:provider.stage}_pool_api_client
-     WEB_DOMAIN: dev.paolorechia.de
-  
+     FRONTEND_BUCKET: ${self:provider.stage}_bucket.paolorechia.de
+     WEB_DOMAIN: ${self:provider.stage}.paolorechia.de
+     AUTH_DOMAIN: auth.paolorechia.de
 
+  
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -51,6 +49,7 @@ resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+
   # Cognito Setup
     MyCognitoUserPool:
       Type: AWS::Cognito::UserPool
@@ -66,11 +65,15 @@ resources:
             Name: email
             Required: false
 
+
     MyCognitoDomain:
-        Type: AWS::Cognito::UserPoolDomain
-        Properties: 
-          Domain: mytest-321
-          UserPoolId: !Ref MyCognitoUserPool
+      Type: AWS::Cognito::UserPoolDomain
+      Properties: 
+        CustomDomainConfig: 
+           CertificateArn: ${file(.certificate)}
+        Domain: ${self:provider.environment.AUTH_DOMAIN}
+        UserPoolId: !Ref MyCognitoUserPool
+
 
     MyCognitoUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
@@ -168,14 +171,18 @@ package:
     - package-lock.json
 
 
+plugins:
+  - serverless-finch
+
+
 custom:
   client:
-    bucketName: test.paolorechia.de
-    distributionFolder: frontend
+    bucketName: ${self:provider.environment.FRONTEND_BUCKET}
+    distributionFolder: frontend/build
 
 
-#  This one deploys to CloudFront. Requires cache invalidation to propagate updates
+#  This one deploys to bucket used as origin for a CloudFront distribution.
+#  Requires manual cache invalidation to propagate updates.
 #  client:
 #    bucketName: mytest-123-bucket-321 # (see Configuration Parameters below)
-#    distributionFolder: frontend
-#    # [other configuration parameters] (see Configuration Parameters below)
+#    distributionFolder: frontend/build
