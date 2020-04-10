@@ -12,7 +12,7 @@ def create_book_handler(event, context):
     print(event)
     if "body" not in event:
         raise Exception("Missing body")
-    request_body = event["body"]
+    request_body = json.loads(event["body"])
     print(request_body)
     context = repository.put_context()
     print("Entering context")
