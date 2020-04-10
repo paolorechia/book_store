@@ -1,0 +1,4 @@
+1. Login on /authorize endpoint
+2. Get code from redirect_uri
+3. Exchange code for token on /token endpoint. Remember to use www/x-www-form-urlencoded
+4. Grab "id_token" and use on Authorization header
