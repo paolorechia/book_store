@@ -6,6 +6,10 @@ import Amplify from 'aws-amplify';
 import { withAuthenticator } from 'aws-amplify-react'; // or 'aws-amplify-react-native';
 import '@aws-amplify/ui/dist/style.css';
 
+import axios from 'axios';
+
+const BOOKS_URL='https://devapi.paolorechia.de/books'
+const API_URL='https://devapi.paolorechia.de'
 
 Amplify.configure({
   region: 'us-east-1',
@@ -14,25 +18,39 @@ Amplify.configure({
 })
 
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      idToken: "",
+      books: []
+    }
+  }
+  componentDidMount() {
+    const idToken = (this.props.authData.signInUserSession.idToken.jwtToken);
+    this.setState({"idToken": idToken}, () => console.log(this.state.idToken));
+    axios.defaults.headers.common['Authorization'] = idToken;
+    axios.defaults.headers.common['Content-Type'] = 'appliction/json'
+    axios.get(BOOKS_URL)
+      .then(res => {
+        const books = res.data;
+        console.log(books);
+        this.setState({ books });
+      })
+    }
+
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          You have the following books in DynamoDB:
+          { this.state.books.map( b => (<p> {b.name} - {b.author} </p>))}
+
+          Well done!
+        </header>
+      </div>
+    );
+  }
 }
 
 export default withAuthenticator(App, true);

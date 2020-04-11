@@ -144,11 +144,11 @@ functions:
       - http:
           path: books
           method: get
+          cors: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
- 
 
   create_book:
     handler: backend/handlers.create_book_handler
@@ -156,6 +156,7 @@ functions:
       - http:
           path: books
           method: put
+          cors: true
           request:
             schema:
               application/json: ${file(models/create_book.json)}
