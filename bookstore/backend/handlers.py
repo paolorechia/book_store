@@ -40,4 +40,4 @@ def get_books_handler(event, context):
         "body": json.dumps(books)
     }
     return response
-    
+
