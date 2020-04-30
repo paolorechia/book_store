@@ -41,3 +41,4 @@ def get_books_handler(event, context):
     }
     return response
     
+print("duh")
